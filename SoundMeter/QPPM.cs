@@ -27,6 +27,9 @@ namespace SoundMeter
 		StringFormat centerAlign;
 		StringFormat rightAlign;
 
+		DateTime lastDrawTime;
+		DateTime currentDrawTime;
+
 		double scaleFactor;
 		float verticalOffset = 10f;
 
@@ -34,6 +37,8 @@ namespace SoundMeter
 		double levelR = -72f;
 		float heightL = 0f;
 		float heightR = 0;
+
+		double returnSpeed = 20 / 1.7; // DB pr. sec
 
 
 		public QPPM()
@@ -59,13 +64,22 @@ namespace SoundMeter
 		/// <param name="R"></param>
 		public void setLevels(double L, double R)
 		{
-			levelL = L;
-			levelR = R;
+			currentDrawTime = DateTime.Now;
+
+			// Do return
+			levelL = (levelL - returnSpeed * (currentDrawTime - lastDrawTime).TotalSeconds);
+			levelR = (levelR - returnSpeed * (currentDrawTime - lastDrawTime).TotalSeconds);
+
+			if (L > levelL) levelL = L;
+			if (R > levelR) levelR = R;
 
 			if (levelL < -72) levelL = -72;
 			if (levelR < -72) levelR = -72;
 
+			
+
 			this.Invalidate();
+			lastDrawTime = currentDrawTime;
 		}
 
 		protected override void OnPaint(PaintEventArgs e)
@@ -74,6 +88,8 @@ namespace SoundMeter
 			g.SmoothingMode = SmoothingMode.None;
 			g.InterpolationMode = InterpolationMode.HighQualityBilinear;
 			g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+
+			
 
 			// BACKGROUND
 			g.FillRectangle(brushBackground, 0f, 0f, Width, Height);
@@ -129,7 +145,6 @@ namespace SoundMeter
 			heightR = (float)(-levelR * scaleFactor);
 			if (heightR > scaleFactor * 62f) heightR = (float)scaleFactor * 62f;
 			g.FillRectangle(brushBar, 50f + ((Width - 60f) / 2f), heightR + verticalOffset, (Width - 60f) / 2f, Height - heightR - verticalOffset - 2f);
-
 		}
 	}
 }

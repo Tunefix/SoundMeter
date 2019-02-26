@@ -20,6 +20,7 @@ namespace SoundMeter
 	public partial class Form1 : Form
 	{
 		WasapiLoopbackCapture _waveIn;
+		BufferedWaveProvider buffer;
 		Dictionary<int, MMDevice> outputs = new Dictionary<int, MMDevice>();
 
 		ComboBox outputSelect;
@@ -69,10 +70,15 @@ namespace SoundMeter
 
 		public Form1()
 		{
-			InitializeComponent();
-			getFonts();
 
+			InitializeComponent();
+			this.FormBorderStyle = FormBorderStyle.FixedSingle;
+			this.MaximizeBox = false;
+			this.Text = "SoundMeter";
 			this.BackColor = Color.FromArgb(255, 0, 32, 64);
+			this.ClientSize = new Size(515, 475);
+
+			getFonts();
 
 			makeLayout();
 
@@ -107,6 +113,8 @@ namespace SoundMeter
 			bitsPrSample = inputFormat.BitsPerSample;
 
 			bytesPrSample = bitsPrSample / 8;
+
+			buffer = new BufferedWaveProvider(_waveIn.WaveFormat);
 		}
 
 		void OnDataAvailable(object sender, WaveInEventArgs e)
@@ -173,8 +181,6 @@ namespace SoundMeter
 				QPPM();
 				goniometer.AddSamples(loopSamplesL, loopSamplesR);
 				correlation.AddSamples(loopSamplesL, loopSamplesR);
-
-				lblDebug.Text = goniometer.amp.ToString();
 			}
 		}
 
@@ -200,30 +206,30 @@ namespace SoundMeter
 
 		void makeLayout()
 		{
-
+			// OUTPUT SELECT
 			outputSelect = new ComboBox();
-			outputSelect.Location = new Point(10, 10);
-			outputSelect.Size = new Size(200, 18);
+			outputSelect.Location = new Point(5, 5);
+			outputSelect.Size = new Size(300, 20);
 			outputSelect.SelectedIndexChanged += initAudio;
 			this.Controls.Add(outputSelect);
 
 			// GONEOMETER
 			goniometer = new Goniometer();
-			goniometer.Location = new Point(210, 5);
+			goniometer.Location = new Point(5, 30);
 			goniometer.Size = new Size(400, 400);
 			goniometer.Font = font;
 			this.Controls.Add(goniometer);
 
 			// QPPM
 			qppm = new QPPM();
-			qppm.Location = new Point(615, 5);
+			qppm.Location = new Point(410, 30);
 			qppm.Size = new Size(100, 400);
 			qppm.Font = font;
 			this.Controls.Add(qppm);
 
 			// CORRELATION METER
 			correlation = new Correlation();
-			correlation.Location = new Point(210, 410);
+			correlation.Location = new Point(5, 435);
 			correlation.Size = new Size(505, 35);
 			correlation.Font = font;
 			this.Controls.Add(correlation);

@@ -14,6 +14,7 @@ namespace SoundMeter
 	{
 		Brush brushBackground = new SolidBrush(Color.FromArgb(255, 16, 16, 16));
 		Brush boxBrush = new SolidBrush(Color.FromArgb(255, 0, 255, 64));
+		Brush boxBrush2= new SolidBrush(Color.FromArgb(255, 255, 0, 64));
 		Brush brushFont = new SolidBrush(Color.FromArgb(255, 255, 204, 0));
 
 		Pen penBorder = new Pen(Color.FromArgb(255, 200, 200, 200), 1f);
@@ -28,6 +29,9 @@ namespace SoundMeter
 		double correlation;
 		double runningTotal;
 		double avg;
+		double max;
+		double min;
+		double minmax;
 
 		double maxChange = 0.05;
 		double value;
@@ -86,6 +90,8 @@ namespace SoundMeter
 			
 
 			runningTotal = 0;
+			max = 0;
+			min = 0;
 			for(int i = 0; i < samplesL.Count; i++)
 			{
 				
@@ -94,11 +100,16 @@ namespace SoundMeter
 				correlation = (phase / 45.0);
 
 				runningTotal += correlation;
+
+				if (correlation > max) max = correlation;
+				if (correlation < min) min = correlation;
 			}
 
 			avg = runningTotal / samplesL.Count;
 			if (avg < -1) avg = -2.0 - avg;
 			if (avg > 1) avg = 2.0 - avg;
+
+			minmax = Math.Abs(max) > Math.Abs(min) ? max : min;
 
 			if (Math.Abs(avg - prevAvg) > maxChange)
 			{
