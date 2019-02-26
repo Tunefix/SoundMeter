@@ -65,29 +65,30 @@ namespace SoundMeter
 
 		public void AddSamples(List<short> L, List<short> R)
 		{
-			samplesL.Clear();
-			samplesR.Clear();
-
-			samplesL.AddRange(L);
-			samplesR.AddRange(R);
-
-			// TRIM TO A NOT-CRAZY AMOUNT
-			if(samplesL.Count > 4096)
+			if (L.Count > 4)
 			{
-				samplesL.RemoveRange(4096, samplesL.Count - 4096);
-				samplesR.RemoveRange(4096, samplesR.Count - 4096);
+				samplesL.Clear();
+				samplesR.Clear();
+
+				samplesL.AddRange(L);
+				samplesR.AddRange(R);
+
+				// TRIM TO A NOT-CRAZY AMOUNT
+				if(samplesL.Count > 4096)
+				{
+					samplesL.RemoveRange(4096, samplesL.Count - 4096);
+					samplesR.RemoveRange(4096, samplesR.Count - 4096);
+				}
+
+			
+				while (samplesL.Count % 3 != 1)
+				{
+					samplesL.RemoveAt(0);
+					samplesR.RemoveAt(0);
+				}
+
+				this.Invalidate();
 			}
-
-			while(samplesL.Count % 3 != 1)
-			{
-				samplesL.RemoveAt(0);
-				samplesR.RemoveAt(0);
-			}
-
-			//if (samplesL.Count > samplesToDisplay) samplesL.RemoveRange(0, samplesL.Count - samplesToDisplay);
-			//if (samplesR.Count > samplesToDisplay) samplesR.RemoveRange(0, samplesR.Count - samplesToDisplay);
-
-			this.Invalidate();
 		}
 
 		protected override void OnPaint(PaintEventArgs e)

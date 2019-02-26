@@ -57,6 +57,26 @@ namespace SoundMeter
 			penLineRedDotted.DashPattern = new float[] { 1, 1 };
 		}
 
+		public void AddSamples(List<short> L, List<short> R)
+		{
+			short maxL = 0;
+			short maxR = 0;
+			// FIND MAX
+			foreach (short s in L)
+			{
+				short v = s == Int16.MinValue ? v = Int16.MaxValue : v = Math.Abs(s);
+				if (v > maxL) maxL = v;
+			}
+
+			foreach (short s in R)
+			{
+				short v = s == Int16.MinValue ? v = Int16.MaxValue : v = Math.Abs(s);
+				if (v > maxR) maxR = v;
+			}
+
+			setLevels(int16ToDBFS(maxL), int16ToDBFS(maxR));
+		}
+
 		/// <summary>
 		/// Set the meter value in dBFS
 		/// </summary>
@@ -145,6 +165,11 @@ namespace SoundMeter
 			heightR = (float)(-levelR * scaleFactor);
 			if (heightR > scaleFactor * 62f) heightR = (float)scaleFactor * 62f;
 			g.FillRectangle(brushBar, 50f + ((Width - 60f) / 2f), heightR + verticalOffset, (Width - 60f) / 2f, Height - heightR - verticalOffset - 2f);
+		}
+
+		double int16ToDBFS(short value)
+		{
+			return 20f * Math.Log10(Math.Abs(value) / 32768f);
 		}
 	}
 }

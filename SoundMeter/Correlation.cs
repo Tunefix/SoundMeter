@@ -57,13 +57,16 @@ namespace SoundMeter
 
 		public void AddSamples(List<short> L, List<short> R)
 		{
-			samplesL.Clear();
-			samplesR.Clear();
+			if (L.Count > 0)
+			{
+				samplesL.Clear();
+				samplesR.Clear();
 
-			samplesL.AddRange(L);
-			samplesR.AddRange(R);
+				samplesL.AddRange(L);
+				samplesR.AddRange(R);
 
-			this.Invalidate();
+				this.Invalidate();
+			}
 		}
 
 		protected override void OnPaint(PaintEventArgs e)

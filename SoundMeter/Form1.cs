@@ -106,6 +106,7 @@ namespace SoundMeter
 		{ 
 			_waveIn = new WasapiLoopbackCapture(outputs[outputSelect.SelectedIndex]);
 			_waveIn.DataAvailable += OnDataAvailable;
+			_waveIn.ShareMode = AudioClientShareMode.Shared;
 			_waveIn.StartRecording();
 			inputFormat = _waveIn.WaveFormat;
 			channels = inputFormat.Channels;
@@ -129,6 +130,8 @@ namespace SoundMeter
 		void runMeters(object sender, EventArgs e)
 		{
 			bytesToProcess = sampleStore.Count;
+			loopSamplesL.Clear();
+			loopSamplesR.Clear();
 
 			if (bytesToProcess > 0)
 			{
@@ -148,8 +151,7 @@ namespace SoundMeter
 
 				// CONVERT LOOPBYTES TO LOOPSAMPLES
 				tmpBytes = loopBytes.ToArray();
-				loopSamplesL.Clear();
-				loopSamplesR.Clear();
+				
 
 				for (int i = 0; i < tmpBytes.Length - (bytesPrSample * channels); i += (bytesPrSample * channels))
 				{
@@ -177,32 +179,16 @@ namespace SoundMeter
 				}
 
 
-				// DO STUFF WITH LOOP SAMPLES
-				QPPM();
-				goniometer.AddSamples(loopSamplesL, loopSamplesR);
-				correlation.AddSamples(loopSamplesL, loopSamplesR);
+				
 			}
+
+			// DO STUFF WITH LOOP SAMPLES
+			qppm.AddSamples(loopSamplesL, loopSamplesR);
+			goniometer.AddSamples(loopSamplesL, loopSamplesR);
+			correlation.AddSamples(loopSamplesL, loopSamplesR);
 		}
 
-		void QPPM()
-		{
-			short maxL = 0;
-			short maxR = 0;
-			// FIND MAX
-			foreach(short s in loopSamplesL)
-			{
-				short v = s == Int16.MinValue ? v = Int16.MaxValue : v = Math.Abs(s);
-				if (v > maxL) maxL = v;
-			}
-
-			foreach (short s in loopSamplesR)
-			{
-				short v = s == Int16.MinValue ? v = Int16.MaxValue : v = Math.Abs(s);
-				if (v > maxR) maxR = v;
-			}
-
-			qppm.setLevels(int16ToDBFS(maxL), int16ToDBFS(maxR));
-		}
+		
 
 		void makeLayout()
 		{
@@ -264,10 +250,7 @@ namespace SoundMeter
 			}
 		}
 
-		double int16ToDBFS(short value)
-		{
-			return 20f * Math.Log10(Math.Abs(value) / 32768f);
-		}
+		
 
 		static public Font GetCustomFont(byte[] fontData, float size, FontStyle style)
 		{
