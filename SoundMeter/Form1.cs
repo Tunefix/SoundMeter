@@ -25,6 +25,7 @@ namespace SoundMeter
 		ComboBox outputSelect;
 		Goniometer goniometer;
 		QPPM qppm;
+		Correlation correlation;
 		Label lblDebug;
 
 		List<byte> sampleStore = new List<byte>();
@@ -171,6 +172,7 @@ namespace SoundMeter
 				// DO STUFF WITH LOOP SAMPLES
 				QPPM();
 				goniometer.AddSamples(loopSamplesL, loopSamplesR);
+				correlation.AddSamples(loopSamplesL, loopSamplesR);
 
 				lblDebug.Text = goniometer.amp.ToString();
 			}
@@ -207,17 +209,24 @@ namespace SoundMeter
 
 			// GONEOMETER
 			goniometer = new Goniometer();
-			goniometer.Location = new Point(210, 10);
+			goniometer.Location = new Point(210, 5);
 			goniometer.Size = new Size(400, 400);
 			goniometer.Font = font;
 			this.Controls.Add(goniometer);
 
 			// QPPM
 			qppm = new QPPM();
-			qppm.Location = new Point(615, 10);
+			qppm.Location = new Point(615, 5);
 			qppm.Size = new Size(100, 400);
 			qppm.Font = font;
 			this.Controls.Add(qppm);
+
+			// CORRELATION METER
+			correlation = new Correlation();
+			correlation.Location = new Point(210, 410);
+			correlation.Size = new Size(505, 35);
+			correlation.Font = font;
+			this.Controls.Add(correlation);
 
 			// DEBUG LABEL
 			lblDebug = new Label();
@@ -294,7 +303,9 @@ namespace SoundMeter
 		private void Form1_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			mainLoop.Stop();
+			_waveIn.StopRecording();
 			Application.Exit();
+			Environment.Exit(0);
 		}
 	}
 }

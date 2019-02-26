@@ -24,20 +24,18 @@ namespace SoundMeter
 
 		List<short> samplesL = new List<short>();
 		List<short> samplesR = new List<short>();
-		int samplesToDisplay = 1024;
 		float meterSize;
-		float logValueX;
-		float logValueY;
 		float x;
 		float y;
 		float prevX;
 		float prevY;
-		bool drawLine;
 		List<PointF> tmpLine = new List<PointF>();
 
 		float sin45 = 0.7071067812f;
 		float cos45 = 0.7071067812f;
 		float sqr2 = 1.414213562f;
+		float normR;
+		float normL;
 		float xL;
 		float xR;
 		float yL;
@@ -47,8 +45,8 @@ namespace SoundMeter
 		public float amp = 8;
 		float ampMax = 8;
 		float ampStep = 0.1f;
-		float xMax;
-		float yMax;
+		float maxL;
+		float maxR;
 		DateTime lastAmpDown;
 		float ampStickTime = 750; // ms
 
@@ -61,12 +59,6 @@ namespace SoundMeter
 			centerAlign.Alignment = StringAlignment.Center;
 			centerAlign.LineAlignment = StringAlignment.Center;
 
-			// PREFILL SAMPLES WITH 0s
-			for(int i = 0; i < samplesToDisplay; i++)
-			{
-				samplesL.Add(0);
-				samplesR.Add(0);
-			}
 
 			lastAmpDown = DateTime.Now;
 		}
@@ -78,6 +70,19 @@ namespace SoundMeter
 
 			samplesL.AddRange(L);
 			samplesR.AddRange(R);
+
+			// TRIM TO A NOT-CRAZY AMOUNT
+			if(samplesL.Count > 4096)
+			{
+				samplesL.RemoveRange(4096, samplesL.Count - 4096);
+				samplesR.RemoveRange(4096, samplesR.Count - 4096);
+			}
+
+			while(samplesL.Count % 3 != 1)
+			{
+				samplesL.RemoveAt(0);
+				samplesR.RemoveAt(0);
+			}
 
 			//if (samplesL.Count > samplesToDisplay) samplesL.RemoveRange(0, samplesL.Count - samplesToDisplay);
 			//if (samplesR.Count > samplesToDisplay) samplesR.RemoveRange(0, samplesR.Count - samplesToDisplay);
@@ -116,16 +121,18 @@ namespace SoundMeter
 			meterSize = (Height - 60f) / 2f;
 			tmpLine.Clear();
 
-			xMax = 0;
-			yMax = 0;
+			maxL = 0;
+			maxR = 0;
 
-			for (int i = 0; i < samplesToDisplay; i++)
+			for (int i = 0; i < samplesL.Count; i++)
 			{
-				xL = (samplesL[i] / (float)Int16.MaxValue) * cos45 * amp;
-				yL = (samplesL[i] / (float)Int16.MaxValue) * sin45 * amp;
+				normL = (samplesL[i] / (float)Int16.MaxValue) * amp;
+				xL = normL * cos45;
+				yL = normL * sin45;
 
-				xR = (samplesR[i] / (float)Int16.MaxValue) * cos45 * amp;
-				yR = (samplesR[i] / (float)Int16.MaxValue) * sin45 * amp;
+				normR = (samplesR[i] / (float)Int16.MaxValue) * amp;
+				xR = normR * cos45;
+				yR = normR * sin45;
 
 				xL = xL * cos45;
 				yL = yL * sin45;
@@ -144,28 +151,33 @@ namespace SoundMeter
 				prevX = x;
 				prevY = y;
 
-				if (xNorm > xMax) xMax = xNorm;
-				if (yNorm > yMax) yMax = yNorm;
+				if (normL > maxL) maxL = normL;
+				if (normR > maxR) maxR = normR;
 			}
 
 			// AMP IF NECESSARY
-			if(xMax > 1.0 || yMax > 1.0)
+			if(maxL > 1.0 || maxR > 1.0)
 			{
-				float max = xMax > yMax ? xMax : yMax;
+				float max = maxL > maxR ? maxL : maxR;
 				amp -= max - 1.0f;
 				lastAmpDown = DateTime.Now;
 			}
-			else if(amp < ampMax && xMax < 0.9 && yMax < 0.9)
+			else if(amp < ampMax && maxL < 0.9 && maxR < 0.9)
 			{
 				if ((DateTime.Now - lastAmpDown).TotalMilliseconds > ampStickTime)
 				{
 					amp += ampStep;
-					// CLAMP (just in case)
+					// CLAMP
 					if (amp > ampMax) amp = ampMax;
 				}
 			}
 
-			g.DrawBeziers(penSamples, tmpLine.ToArray());
+
+
+			if (tmpLine.Count > 3)
+			{
+				g.DrawBeziers(penSamples, tmpLine.ToArray());
+			}
 		}
 
 		private double deg2rad(float deg)
