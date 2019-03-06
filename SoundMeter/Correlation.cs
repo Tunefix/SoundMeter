@@ -24,16 +24,13 @@ namespace SoundMeter
 		List<short> samplesL = new List<short>();
 		List<short> samplesR = new List<short>();
 
-		double phase;
+		double polarDirection;
 		double magnitude;
 		double correlation;
 		double runningTotal;
 		double avg;
-		double max;
-		double min;
-		double minmax;
 
-		double maxChange = 0.05;
+		double maxChange = 0.025;
 		double value;
 		double prevAvg;
 
@@ -93,27 +90,20 @@ namespace SoundMeter
 			
 
 			runningTotal = 0;
-			max = 0;
-			min = 0;
 			for(int i = 0; i < samplesL.Count; i++)
 			{
 				
-				phase = -rad2deg(Math.Atan2(samplesL[i], samplesR[i]));
+				polarDirection = Math.Atan2(samplesL[i], samplesR[i]) - deg2rad(45);
 				magnitude = Math.Sqrt((samplesL[i] * samplesL[i]) + (samplesR[i] * samplesR[i]));
-				correlation = (phase / 45.0);
+				//correlation = (-rad2deg(phase) / 45.0);
+				correlation = Math.Cos(polarDirection * 2);
 
 				runningTotal += correlation;
-
-				if (correlation > max) max = correlation;
-				if (correlation < min) min = correlation;
 			}
 
 			avg = runningTotal / samplesL.Count;
-			if (avg < -1) avg = -2.0 - avg;
-			if (avg > 1) avg = 2.0 - avg;
 
-			minmax = Math.Abs(max) > Math.Abs(min) ? max : min;
-
+			// AVG SLOW MOVEMENT
 			if (Math.Abs(avg - prevAvg) > maxChange)
 			{
 				if (avg > prevAvg)
@@ -134,7 +124,7 @@ namespace SoundMeter
 			if (value > 1) value = 1;
 			if (value < -1) value = -1;
 
-			//g.DrawString(avg.ToString(), Font, brushFont, new PointF(5f, 2f));
+			//g.DrawString(avg.ToString() + "::" + avg.ToString(), Font, brushFont, new PointF(5f, 2f));
 
 			// CORRELATION BOX
 			y = Height - 19f;
@@ -165,6 +155,10 @@ namespace SoundMeter
 			return rad / (Math.PI / 180);
 		}
 
+		private double deg2rad(double deg)
+		{
+			return deg * (Math.PI / 180);
+		}
 		
 	}
 }
